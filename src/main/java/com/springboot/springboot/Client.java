@@ -3,59 +3,71 @@ package com.springboot.springboot;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import java.io.IOException;
 import java.util.Scanner;
 
 public class Client {
     private static final String SERVER_URL = "http://localhost:8080/json";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args)  {
+        System.out.println("Connection Successful! \n");
+        System.out.println("Instructions: \nIf you'd like to receive a JSON-Object, enter '1' & then enter the name of the object you'd like to receive.");
+        System.out.println("If you'd like to receive the whole JSON-File, enter '2'.");
+        System.out.println("To return to the main menu after receiving a JSON-Object, enter 'n' & then 'y'.\n");
         Scanner scanner = new Scanner(System.in);
-
-        String objName, attributeName, input;
-        boolean receiveWholeObject;
+        String input;
 
         do {
-            System.out.println("You have successfully connected to the server" + ".\n");
-            System.out.println("Enter name of JSON-Object to receive (object1/object2/object3)");
-            objName = scanner.nextLine();
-
-            System.out.println("Enter name of JSON-Attribute to receive (name/age/city");
-            attributeName = scanner.nextLine();
-
-            System.out.println("Receive all JSON-Data from the object instead? (y/n)");
+            System.out.println("What would you like to receive?");
+            System.out.println("1. A JSON-Object");
+            System.out.println("2. The whole JSON-File\n");
+            System.out.println("Type 'exit' to disconnect from the server.\n");
             input = scanner.nextLine();
-            receiveWholeObject = input.equalsIgnoreCase("y");
 
-            System.out.println("Receive all JSON-data from the whole JSON-File? (y/n)");
-            input = scanner.nextLine();
-            boolean retrieveWholeFile = input.equalsIgnoreCase("y");
+            if (input.equals("1")) {
+                String objName;
+                do {
+                    System.out.println("\nEnter name of JSON-Object to receive (object1/object2/object3)");
+                    objName = scanner.nextLine();
 
-            RestTemplate restTemplate = new RestTemplate();
+                    RestTemplate restTemplate = new RestTemplate();
 
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(SERVER_URL)
-                    .queryParam("objName", objName)
-                    .queryParam("attributeName", attributeName)
-                    .queryParam("receiveWholeObject", receiveWholeObject)
-                    .queryParam("retrieveWholeFile", retrieveWholeFile);
+                    UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(SERVER_URL)
+                            .queryParam("objName", objName);
 
-            ResponseEntity<String> response = restTemplate.getForEntity(builder.toUriString(), String.class);
+                    ResponseEntity<String> response = restTemplate.getForEntity(builder.toUriString(), String.class);
+
+                    String jsonString = response.getBody();
+                    if (jsonString == null || jsonString.equals("null")) {
+                        System.out.println("ERROR: JSON-Object not found.");
+                    } else {
+                        System.out.println("JSON Object:\n" + jsonString);
+                    }
+
+                    System.out.println("\nDo you want to receive another JSON-Object? (y/n)");
+                    input = scanner.nextLine();
+                } while (input.equalsIgnoreCase("y"));
+            } else if (input.equals("2")) {
+                RestTemplate restTemplate = new RestTemplate();
+
+                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(SERVER_URL)
+                        .queryParam("retrieveWholeFile", true);
+
+                ResponseEntity<String> response = restTemplate.getForEntity(builder.toUriString(), String.class);
 
                 String jsonString = response.getBody();
-                if (retrieveWholeFile) {
-                    System.out.println("JSON File:\n" + jsonString);
-                } else {
-                    System.out.println("JSON " + (receiveWholeObject ? "Object" : "Attribute") + ":\n" + jsonString);
-                }
-
-
-            System.out.println("Do you want to retrieve another JSON object/attribute? (y/n)");
-            input = scanner.nextLine();
-            if (input.equalsIgnoreCase("n")) {
+                System.out.println("JSON File:\n" + jsonString);
+            } else if (input.equalsIgnoreCase("exit")) {
+                // Exit the program if the user enters "exit"
                 System.out.println("Exiting application...");
-                break;
+                System.exit(0);
+            } else {
+                System.out.println("Invalid option selected.");
             }
+
+            System.out.println("\nDo you want to receive something else? (y/n)");
+            input = scanner.nextLine();
         } while (input.equalsIgnoreCase("y"));
+
+        System.out.println("Exiting application...");
     }
 }
-
